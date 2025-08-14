@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  couchbase-order:
+    image: couchbase:latest
+    container_name: couchbase-order
+    ports:
+      - "8091:8091"   # UI ve yönetim
+      - "8092:8092"
+      - "8093:8093"
+      - "8094:8094"
+      - "11210:11210" # Data port
+    environment:
+      - COUCHBASE_ADMINISTRATOR_USERNAME=admin
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+    volumes:
+      - couchbase_order_data:/opt/couchbase/var
+    networks:
+      - app-network
+
+  go-app:
+    image: golang:1.24-alpine
+    container_name: go-app
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: go run main.go
+    depends_on:
+      - couchbase-order
+    networks:
+      - app-network
+
+volumes:
+  couchbase_order_data:
+
+networks:
+  app-network:
+    driver: bridge

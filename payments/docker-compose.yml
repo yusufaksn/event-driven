@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  couchbase-payment:
+    image: couchbase:latest
+    container_name: couchbase-payment
+    ports:
+      - "8291:8091"
+      - "8292:8092"
+      - "8293:8093"
+      - "8294:8094"
+      - "11410:11210"
+    environment:
+      - COUCHBASE_ADMINISTRATOR_USERNAME=admin
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+    volumes:
+      - couchbase_payment_data:/opt/couchbase/var
+volumes:
+  couchbase_payment_data:
