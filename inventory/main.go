@@ -8,6 +8,7 @@ import (
 	"inventory/infra/kafka"
 	"inventory/infra/mongodb"
 
+	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
 )
 
@@ -16,7 +17,16 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
+	app := fiber.New(fiber.Config{
+		IdleTimeout:  5 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		Concurrency:  256 * 1024,
+	})
+
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	mongodb.InitMongo(ctx)
 	kafka.ReadKafka()
+	log.Println(app.Listen(":3001"))
 }

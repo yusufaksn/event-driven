@@ -8,6 +8,8 @@ import (
 	"order/infra/couchbase"
 	"order/infra/kafka"
 
+	"time"
+
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -20,7 +22,12 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	id := uuid.New().String()
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		IdleTimeout:  5 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		Concurrency:  256 * 1024,
+	})
 	app.Post("/order", func(c fiber.Ctx) error {
 		o := new(domain.OrderItem)
 		if err := json.Unmarshal(c.Body(), o); err != nil {
