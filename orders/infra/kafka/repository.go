@@ -9,7 +9,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func SendKafka(productJson []byte, productId string) {
+func SendKafka(productJson []byte, eventID string) {
 	brokerAddress := os.Getenv("KAFKA_BROKER_ADDRESS")
 	topic := os.Getenv("KAFKA_TOPIC")
 	writer := kafka.NewWriter(kafka.WriterConfig{
@@ -20,7 +20,7 @@ func SendKafka(productJson []byte, productId string) {
 	defer writer.Close()
 
 	productItem := kafka.Message{
-		Key:   []byte(productId),
+		Key:   []byte(eventID),
 		Value: productJson,
 	}
 

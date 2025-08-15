@@ -28,5 +28,5 @@ func main() {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	mongodb.InitMongo(ctx)
 	kafka.ReadKafka()
-	log.Println(app.Listen(":3001"))
+	log.Fatal(app.Listen(":3001"))
 }

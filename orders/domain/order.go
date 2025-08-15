@@ -6,4 +6,5 @@ type OrderItem struct {
 	Quantity    int    `json:"quantity"`
 	Total       int    `json:"total"`
 	Description string `json:"description"`
+	EventID     string `json:"eventID"`
 }
