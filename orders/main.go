@@ -21,6 +21,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+	kafka.InitKafka()
+	couchbase.InitCouchBase()
 	app := fiber.New(fiber.Config{
 		IdleTimeout:  5 * time.Second,
 		ReadTimeout:  10 * time.Second,
@@ -40,7 +42,7 @@ func main() {
 
 		return c.JSON(fiber.Map{"message": "order created"})
 	})
-
+	defer kafka.CloseKafkaConnection()
 	log.Fatal(app.Listen(":3000"))
 }
 

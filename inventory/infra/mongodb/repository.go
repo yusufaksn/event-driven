@@ -48,6 +48,8 @@ func UpdateInventory(productID string, totalQuantity int) {
 	res, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		log.Println("Mongo err:", err)
+	} else {
+		// write kafka
 	}
 
 	if res.ModifiedCount == 0 {

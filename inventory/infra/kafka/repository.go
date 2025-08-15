@@ -13,11 +13,11 @@ import (
 
 var p domain.OrderItem
 var reader *kafka.Reader
+var brokerAddress = os.Getenv("KAFKA_BROKER_ADDRESS")
+var topic = os.Getenv("KAFKA_TOPIC")
+var groupID = os.Getenv("KAFKA_GROUP")
 
 func InitKafka() {
-	brokerAddress := os.Getenv("KAFKA_BROKER_ADDRESS")
-	topic := os.Getenv("KAFKA_TOPIC")
-	groupID := os.Getenv("KAFKA_GROUP")
 	reader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        []string{brokerAddress},
 		GroupID:        groupID,
@@ -37,7 +37,6 @@ func ReadKafka() {
 			break
 		}
 		json.Unmarshal(m.Value, &p)
-		log.Println("product id :", p.ProductID)
 		mongodb.UpdateInventory(p.ProductID, p.Quantity)
 	}
 }
