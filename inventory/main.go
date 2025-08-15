@@ -18,6 +18,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	kafka.InitKafka()
 	app := fiber.New(fiber.Config{
 		IdleTimeout:  5 * time.Second,
 		ReadTimeout:  10 * time.Second,
@@ -25,8 +26,10 @@ func main() {
 		Concurrency:  256 * 1024,
 	})
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	mongodb.InitMongo(ctx)
 	kafka.ReadKafka()
+	defer kafka.CloseKafka()
 	log.Fatal(app.Listen(":3001"))
 }
