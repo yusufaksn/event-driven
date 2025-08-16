@@ -15,6 +15,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
+/*
+type Request any
+type Response any
+handler
+func HttpHandler[request Request, response Response](req Request, res Response) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var req R
+	}
+}*/
+
 func main() {
 
 	err := godotenv.Load()
