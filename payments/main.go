@@ -2,70 +2,36 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"log"
 
-	"github.com/segmentio/kafka-go"
+	"time"
+
+	"payments/infra/kafka"
+	"payments/infra/mongodb"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/joho/godotenv"
 )
 
-/*
-*
--- CACHE ASIDE --
-*/
 var ctx = context.Background()
-
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "testuser"
-	password = "testpass"
-	dbname   = "testdb"
-)
-
-var brokerAdress = "host.docker.internal:9092"
-
-type productItem struct {
-	ProductID   string `json:"product_id"`
-	Name        string `json:"name"`
-	Amount      int    `json:"amount"`
-	Description string `json:"description"`
-}
 
 func main() {
 
-	productId := "as3d4-ask4-dddc-3337"
-	topic := "order_topic"
-
-	msg := productItem{
-		ProductID:   productId,
-		Name:        "notebook",
-		Amount:      15,
-		Description: "notebook description",
-	}
-
-	productJson, err := json.Marshal(msg)
-
+	err := godotenv.Load()
 	if err != nil {
-		panic(err)
+		log.Fatal("Error loading .env file")
 	}
 
-	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers: []string{brokerAdress},
-		Topic:   topic,
+	mongodb.InitMongo(ctx)
+	kafka.InitKafka()
+	app := fiber.New(fiber.Config{
+		IdleTimeout:  5 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		Concurrency:  256 * 1024,
 	})
-
-	defer writer.Close()
-
-	productItem := kafka.Message{
-		Key:   []byte(productId),
-		Value: productJson,
-	}
-
-	errWriteMessage := writer.WriteMessages(context.Background(), productItem)
-	if errWriteMessage != nil {
-		fmt.Println("Failed", err)
-	} else {
-		fmt.Println("The message is sent successfuly")
-	}
+	kafka.ReadKafka()
+	defer kafka.CloseKafka()
+	log.Fatalln(app.Listen(":3002"))
 
 }

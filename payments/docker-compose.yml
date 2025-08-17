@@ -1,18 +1,18 @@
-version: '3.8'
+version: '3.9'
+
 services:
-  couchbase-payment:
-    image: couchbase:latest
-    container_name: couchbase-payment
-    ports:
-      - "8291:8091"
-      - "8292:8092"
-      - "8293:8093"
-      - "8294:8094"
-      - "11410:11210"
+  mongo-payment:
+    image: mongo:6.0
+    container_name: mongo-db-payment
+    restart: always
     environment:
-      - COUCHBASE_ADMINISTRATOR_USERNAME=admin
-      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret123
+      MONGO_INITDB_DATABASE: mydb
+    ports:
+      - "27018:27017"
     volumes:
-      - couchbase_payment_data:/opt/couchbase/var
+      - mongo-data-payment:/data/db
+
 volumes:
-  couchbase_payment_data:
+  mongo-data-payment:
