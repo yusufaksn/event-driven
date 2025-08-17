@@ -56,7 +56,8 @@ func publishKafka(orderItem domain.OrderItem) {
 	inventoryItem.EventID = orderItem.EventID
 	inventoryItem.ProductID = orderItem.ProductID
 	inventoryItem.Quantity = orderItem.Quantity
-	inventoryItem.Message = "inventory_created"
+	inventoryItem.Message = "inventory_reserved"
+	inventoryItem.Price = orderItem.Price
 	result, _ := json.Marshal(inventoryItem)
 
 	inventoryData := kafka.Message{
