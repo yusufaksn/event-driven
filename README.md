@@ -1,1 +1,1 @@
-# event-driven (Composite / Enriched Event)
+# event-driven
