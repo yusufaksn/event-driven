@@ -31,5 +31,5 @@ func main() {
 	mongodb.InitMongo(ctx)
 	kafka.ReadKafka()
 	defer kafka.CloseKafka()
-	log.Fatal(app.Listen(":3001"))
+	log.Fatalln(app.Listen(":3001"))
 }

@@ -12,12 +12,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var client *mongo.Client
+type MongoRepository struct {
+	client *mongo.Client
+}
 
-func InitMongo(ctx context.Context) {
+func InitMongo(ctx context.Context) *MongoRepository {
 	var err error
 	connectionUrl := os.Getenv("MONGO_CONN_URL")
-	client, err = mongo.Connect(ctx, options.Client().ApplyURI(connectionUrl))
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionUrl))
 	if err != nil {
 		log.Fatal("MongoDB handles connection errors:", err)
 	}
@@ -27,11 +30,14 @@ func InitMongo(ctx context.Context) {
 	}
 
 	log.Println("Connection succesfull..")
+	return &MongoRepository{
+		client: client,
+	}
 }
 
-func StoreMongoDB(paymentItem domain.PaymentItem) {
+func (m *MongoRepository) StoreMongoDB(paymentItem domain.PaymentItem) {
 
-	collection := client.Database("mydb").Collection("payments")
+	collection := m.client.Database("mydb").Collection("payments")
 	filter := bson.M{"orderid": paymentItem.OrderID}
 	update := bson.M{"$set": paymentItem}
 	opts := options.Update().SetUpsert(true)
