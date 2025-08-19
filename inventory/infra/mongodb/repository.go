@@ -12,12 +12,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var client *mongo.Client
+type MongoRepository struct {
+	client *mongo.Client
+}
 
-func InitMongo(ctx context.Context) {
+func InitMongo(ctx context.Context) *MongoRepository {
 	var err error
 	connectionUrl := os.Getenv("MONGO_CONN_URL")
-	client, err = mongo.Connect(ctx, options.Client().ApplyURI(connectionUrl))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionUrl))
 	if err != nil {
 		log.Fatal("MongoDB handles connection errors:", err)
 	}
@@ -27,14 +29,17 @@ func InitMongo(ctx context.Context) {
 	}
 
 	log.Println("Connection succesfull..")
+	return &MongoRepository{
+		client: client,
+	}
 }
 
-func UpdateInventory(productID string, totalQuantity int) {
+func (m *MongoRepository) UpdateInventory(productID string, totalQuantity int) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	collection := client.Database("mydb").Collection("mydb")
+	collection := m.client.Database("mydb").Collection("mydb")
 
 	filter := bson.D{
 		{Key: "productID", Value: productID},

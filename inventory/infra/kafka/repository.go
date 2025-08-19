@@ -2,9 +2,6 @@ package kafka
 
 import (
 	"context"
-	"encoding/json"
-	"inventory/domain"
-	"inventory/infra/mongodb"
 	"log"
 	"os"
 
@@ -12,17 +9,17 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-var orderItem domain.OrderItem
-var inventoryItem domain.InventoryItem
-var reader *kafka.Reader
-var writer *kafka.Writer
+type KafkaRepository struct {
+	reader *kafka.Reader
+	writer *kafka.Writer
+}
 
-func InitKafka() {
+func InitKafka() *KafkaRepository {
 	var brokerAddress = os.Getenv("KAFKA_BROKER_ADDRESS")
 	var order_topic = os.Getenv("KAFKA_ORDER_TOPIC")
 	var inventory_topic = os.Getenv("KAFKA_INVENTORY_TOPIC")
 	var groupID = os.Getenv("KAFKA_GROUP")
-	reader = kafka.NewReader(kafka.ReaderConfig{
+	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        []string{brokerAddress},
 		GroupID:        groupID,
 		Topic:          order_topic,
@@ -30,42 +27,32 @@ func InitKafka() {
 		MaxBytes:       10e6,
 		CommitInterval: 0,
 	})
-	writer = kafka.NewWriter(kafka.WriterConfig{
+	writer := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: []string{brokerAddress},
 		Topic:   inventory_topic,
 	})
-}
-
-func ReadKafka() {
-	for {
-		m, err := reader.ReadMessage(context.Background())
-		if err != nil {
-			log.Println("Error:", err)
-			break
-		}
-		json.Unmarshal(m.Value, &orderItem)
-		mongodb.UpdateInventory(orderItem.ProductID, orderItem.Quantity)
-
-		publishKafka(orderItem)
+	return &KafkaRepository{
+		reader: reader,
+		writer: writer,
 	}
 }
 
-func publishKafka(orderItem domain.OrderItem) {
+func (r *KafkaRepository) ReadKafka(ctx context.Context) ([]byte, error) {
+	m, err := r.reader.ReadMessage(context.Background())
+	if err != nil {
+		log.Println("Error:", err)
+		return nil, err
+	} else {
+		return m.Value, nil
+	}
+}
 
-	inventoryItem.OrderID = orderItem.OrderID
-	inventoryItem.EventID = orderItem.EventID
-	inventoryItem.ProductID = orderItem.ProductID
-	inventoryItem.Quantity = orderItem.Quantity
-	inventoryItem.Message = "inventory_reserved"
-	inventoryItem.Price = orderItem.Price
-	result, _ := json.Marshal(inventoryItem)
-
+func (r *KafkaRepository) PublishKafka(data []byte) {
 	inventoryData := kafka.Message{
 		Key:   []byte(IdGenerate()),
-		Value: result,
+		Value: data,
 	}
-
-	errWriteMessage := writer.WriteMessages(context.Background(), inventoryData)
+	errWriteMessage := r.writer.WriteMessages(context.Background(), inventoryData)
 	if errWriteMessage != nil {
 		log.Println("Failed", errWriteMessage)
 	} else {
@@ -77,7 +64,7 @@ func IdGenerate() string {
 	return uuid.New().String()
 }
 
-func CloseKafka() {
-	reader.Close()
-	writer.Close()
+func CloseKafka(r *KafkaRepository) {
+	r.reader.Close()
+	r.writer.Close()
 }

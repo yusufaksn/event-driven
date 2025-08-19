@@ -7,6 +7,7 @@ import (
 
 	"inventory/infra/kafka"
 	"inventory/infra/mongodb"
+	"inventory/services"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
@@ -18,7 +19,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	kafka.InitKafka()
+	kafkaRepo := kafka.InitKafka()
 	app := fiber.New(fiber.Config{
 		IdleTimeout:  5 * time.Second,
 		ReadTimeout:  10 * time.Second,
@@ -28,8 +29,11 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	mongodb.InitMongo(ctx)
-	kafka.ReadKafka()
-	defer kafka.CloseKafka()
+	mongoRepo := mongodb.InitMongo(ctx)
+	s := services.NewInventoryService(kafkaRepo, mongoRepo)
+	s.ReadKafKaToStoreMongoToPublishKafka(ctx)
+
+	defer kafka.CloseKafka(kafkaRepo)
+
 	log.Fatalln(app.Listen(":3001"))
 }
