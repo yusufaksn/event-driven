@@ -13,19 +13,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type InventoryService struct {
+type PaymentService struct {
 	kafkaRepo *kafka.KafkaRepository
 	mongoRepo *mongodb.MongoRepository
 }
 
-func NewInventoryService(kafkaRepo *kafka.KafkaRepository, mongoRepo *mongodb.MongoRepository) *InventoryService {
-	return &InventoryService{
+func NewPaymementService(kafkaRepo *kafka.KafkaRepository, mongoRepo *mongodb.MongoRepository) *PaymentService {
+	return &PaymentService{
 		kafkaRepo: kafkaRepo,
 		mongoRepo: mongoRepo,
 	}
 }
 
-func (s *InventoryService) ReadKafkaToSaveMongoDB(ctx context.Context) {
+func (s *PaymentService) ReadKafkaToSaveMongoDB(ctx context.Context) {
 	for {
 		var inventoryItem domain.InventoryItem
 		resultValue, err := s.kafkaRepo.ReadKafka(ctx)
@@ -40,7 +40,7 @@ func (s *InventoryService) ReadKafkaToSaveMongoDB(ctx context.Context) {
 	}
 }
 
-func (s *InventoryService) PaymentCalculateToStoreMongo(inventoryItem domain.InventoryItem) {
+func (s *PaymentService) PaymentCalculateToStoreMongo(inventoryItem domain.InventoryItem) {
 	var paymentItem domain.PaymentItem
 	if inventoryItem.Message == "inventory_reserved" {
 		paymentItem.PaymentID = IdGenerate()

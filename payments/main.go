@@ -37,7 +37,7 @@ func main() {
 	kafkaRepo := kafka.InitKafka()
 	defer kafka.CloseKafka(kafkaRepo)
 
-	inventoryService := services.NewInventoryService(kafkaRepo, mongoRepo)
+	inventoryService := services.NewPaymementService(kafkaRepo, mongoRepo)
 
 	go inventoryService.ReadKafkaToSaveMongoDB(ctx)
 
