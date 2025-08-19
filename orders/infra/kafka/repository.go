@@ -9,25 +9,30 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-var writer *kafka.Writer
+type KafkaRepository struct {
+	writer *kafka.Writer
+}
 
-func InitKafka() {
+func InitKafka() *KafkaRepository {
 	brokerAddress := os.Getenv("KAFKA_BROKER_ADDRESS")
 	topic := os.Getenv("KAFKA_TOPIC")
-	writer = kafka.NewWriter(kafka.WriterConfig{
+	writer := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: []string{brokerAddress},
 		Topic:   topic,
 	})
+	return &KafkaRepository{
+		writer: writer,
+	}
 }
 
-func SendKafka(productJson []byte, eventID string) {
+func (r *KafkaRepository) SendKafka(productJson []byte, eventID string) {
 
 	productItem := kafka.Message{
 		Key:   []byte(eventID),
 		Value: productJson,
 	}
 
-	errWriteMessage := writer.WriteMessages(context.Background(), productItem)
+	errWriteMessage := r.writer.WriteMessages(context.Background(), productItem)
 	if errWriteMessage != nil {
 		fmt.Println("Failed", errWriteMessage)
 	} else {
@@ -36,6 +41,6 @@ func SendKafka(productJson []byte, eventID string) {
 
 }
 
-func CloseKafkaConnection() {
-	writer.Close()
+func CloseKafkaConnection(r *KafkaRepository) {
+	r.writer.Close()
 }

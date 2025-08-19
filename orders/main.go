@@ -7,6 +7,7 @@ import (
 	"order/domain"
 	"order/infra/couchbase"
 	"order/infra/kafka"
+	"order/services"
 
 	"time"
 
@@ -15,24 +16,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
-/*
-type Request any
-type Response any
-handler
-func HttpHandler[request Request, response Response](req Request, res Response) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var req R
-	}
-}*/
-
 func main() {
 
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	kafka.InitKafka()
-	couchbase.InitCouchBase()
+	kafkaRepo := kafka.InitKafka()
+	couchBaseRepo := couchbase.InitCouchBase()
 	app := fiber.New(fiber.Config{
 		IdleTimeout:  5 * time.Second,
 		ReadTimeout:  10 * time.Second,
@@ -40,19 +31,18 @@ func main() {
 		Concurrency:  256 * 1024,
 	})
 	app.Post("/order", func(c fiber.Ctx) error {
-		o := new(domain.OrderItem)
-		if err := json.Unmarshal(c.Body(), o); err != nil {
+
+		orderItem := new(domain.OrderItem)
+		s := services.NewOrderService(kafkaRepo, couchBaseRepo)
+
+		if err := json.Unmarshal(c.Body(), orderItem); err != nil {
 			return c.Status(400).JSON(fiber.Map{"error": "invalid JSON"})
 		}
-		o.OrderID = IdGenerate()
-		o.EventID = IdGenerate()
-		data, _ := json.Marshal(o)
-		kafka.SendKafka(data, IdGenerate())
-		couchbase.Save(o, IdGenerate())
+		s.SendKafkaToStoreCouchbase(orderItem)
 
 		return c.JSON(fiber.Map{"message": "order created"})
 	})
-	defer kafka.CloseKafkaConnection()
+	defer kafka.CloseKafkaConnection(kafkaRepo)
 	log.Fatal(app.Listen(":3000"))
 }
 

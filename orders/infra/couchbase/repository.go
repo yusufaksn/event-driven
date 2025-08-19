@@ -8,12 +8,14 @@ import (
 	"github.com/couchbase/gocb/v2"
 )
 
-var cluster *gocb.Cluster
-var collection *gocb.Collection
+type CouchbaseRepository struct {
+	cluster    *gocb.Cluster
+	collection *gocb.Collection
+}
 
-func InitCouchBase() {
+func InitCouchBase() *CouchbaseRepository {
 	var err error
-	cluster, err = gocb.Connect(os.Getenv("COUCHBASE_URL"), gocb.ClusterOptions{
+	cluster, err := gocb.Connect(os.Getenv("COUCHBASE_URL"), gocb.ClusterOptions{
 		Username: os.Getenv("COUCHBASE_USERNAME"),
 		Password: os.Getenv("COUCHBASE_PASSWORD"),
 	})
@@ -26,13 +28,17 @@ func InitCouchBase() {
 	if err != nil {
 		log.Fatalf("Bucket not ready: %v", err)
 	}
-	collection = bucket.DefaultCollection()
+	collection := bucket.DefaultCollection()
+	return &CouchbaseRepository{
+		cluster:    cluster,
+		collection: collection,
+	}
 
 }
 
-func Save(data any, orderID string) {
+func (r CouchbaseRepository) Save(data any, orderID string) {
 	var errCollection error
-	_, errCollection = collection.Upsert(orderID, data, nil)
+	_, errCollection = r.collection.Upsert(orderID, data, nil)
 	if errCollection != nil {
 		log.Println(errCollection)
 	}
