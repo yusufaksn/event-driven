@@ -1,0 +1,47 @@
+receivers:
+  otlp:
+    protocols:
+      grpc: {}
+      http: {}
+
+exporters:
+  # Jaeger gRPC exporter
+  jaeger:
+    endpoint: "jaeger:14250"
+    tls:
+      insecure: true
+
+  # Zipkin HTTP exporter
+  zipkin:
+    endpoint: "http://jaeger:9411/api/v2/spans"
+
+  # OTLP HTTP exporter örneği
+  otlphttp:
+    endpoint: "http://host.docker.internal:4318"
+    tls:
+      insecure: true
+
+  # Debug exporter
+  debug: {}
+
+processors:
+  batch: {}
+
+extensions:
+  health_check:
+  pprof:
+    endpoint: :1888
+  zpages:
+    endpoint: :55679
+
+service:
+  extensions: [pprof, zpages, health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, zipkin, jaeger, otlphttp]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, otlphttp]

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/segmentio/kafka-go"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type KafkaRepository struct {
@@ -25,12 +26,14 @@ func InitKafka() *KafkaRepository {
 	}
 }
 
-func (r *KafkaRepository) SendKafka(productJson []byte, eventID string) {
+func (r *KafkaRepository) SendKafka(productJson []byte, eventID string, tracer trace.Tracer, ctx context.Context) {
 
 	productItem := kafka.Message{
 		Key:   []byte(eventID),
 		Value: productJson,
 	}
+
+	_, span := tracer.Start(ctx, "kafka publish")
 
 	errWriteMessage := r.writer.WriteMessages(context.Background(), productItem)
 	if errWriteMessage != nil {
@@ -38,6 +41,7 @@ func (r *KafkaRepository) SendKafka(productJson []byte, eventID string) {
 	} else {
 		fmt.Println("The message is sent successfuly")
 	}
+	span.End()
 
 }
 

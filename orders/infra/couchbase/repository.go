@@ -1,16 +1,20 @@
 package couchbase
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
 
 	"github.com/couchbase/gocb/v2"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type CouchbaseRepository struct {
 	cluster    *gocb.Cluster
 	collection *gocb.Collection
+
+	Tracer trace.Tracer
 }
 
 func InitCouchBase() *CouchbaseRepository {
@@ -36,11 +40,14 @@ func InitCouchBase() *CouchbaseRepository {
 
 }
 
-func (r CouchbaseRepository) Save(data any, orderID string) {
+func (r *CouchbaseRepository) Save(data any, orderID string, tracer trace.Tracer) context.Context {
 	var errCollection error
+	ctx, span := tracer.Start(context.Background(), "couchbase upsert")
 	_, errCollection = r.collection.Upsert(orderID, data, nil)
 	if errCollection != nil {
 		log.Println(errCollection)
 	}
+	span.End()
 	log.Println("Successfully recorded..")
+	return ctx
 }

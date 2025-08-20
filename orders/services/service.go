@@ -7,11 +7,13 @@ import (
 	"order/infra/kafka"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type OrderService struct {
 	kafkaRepo     *kafka.KafkaRepository
 	couchBaseRepo *couchbase.CouchbaseRepository
+	Tracer        trace.Tracer
 }
 
 func NewOrderService(kafkaRepo *kafka.KafkaRepository, couchBaseRepo *couchbase.CouchbaseRepository) *OrderService {
@@ -21,12 +23,13 @@ func NewOrderService(kafkaRepo *kafka.KafkaRepository, couchBaseRepo *couchbase.
 	}
 }
 
-func (r *OrderService) SendKafkaToStoreCouchbase(orderItem *domain.OrderItem) {
+func (r *OrderService) SendKafkaToStoreCouchbase(orderItem *domain.OrderItem, tracer trace.Tracer) {
 	orderItem.OrderID = idGenerate()
 	orderItem.EventID = idGenerate()
 	data, _ := json.Marshal(orderItem)
-	r.kafkaRepo.SendKafka(data, idGenerate())
-	r.couchBaseRepo.Save(orderItem, idGenerate())
+	ctx := r.couchBaseRepo.Save(orderItem, idGenerate(), tracer)
+	r.kafkaRepo.SendKafka(data, idGenerate(), tracer, ctx)
+
 }
 
 func idGenerate() string {
