@@ -1,8 +1,8 @@
-# event-driven
+# Event-driven
 
 Project Setup Guide
 
-This guide explains how to set up and run the system step by step. The system uses Kafka and multiple Go-based microservices: order, inventory, and payment.
+This guide explains how to set up and run the system step by step. The system uses Kafka and multiple microservices: order, inventory, and payment.
 
 1. Run Kafka from the root directory
 
@@ -11,7 +11,7 @@ Start Kafka with the following command:
 
 docker compose up -d
 
-Verify that Kafka containers are running with:
+Verify that Kafka containers are running:
 
 docker ps
 
@@ -19,7 +19,7 @@ docker ps
 
 After Kafka is running, open Kafka UI in your browser.
 
-Go to the configured Kafka UI address (for example: http://localhost:8080
+Go to the Kafka UI address (e.g., http://localhost:8080
 ).
 
 Navigate to the Topics section.
@@ -30,22 +30,39 @@ order_topic
 
 inventory_topic
 
-3. Check .env files
+3. Prepare .env files for each service
 
-Each service (order, inventory, payment) requires a .env file for configuration.
+Each service requires a .env file. If the file does not exist, create it in the service directory with the following content:
 
-If the .env file does not exist inside a service directory, create one.
+Inventory Service (inventory/.env)
 
-At minimum, it should contain the Kafka broker connection details and any database URIs.
+MONGO_CONN_URL="mongodb://admin:secret123@mongo-inventory:27017/mydb?authSource=admin"
+KAFKA_BROKER_ADDRESS="kafka:9092"
+KAFKA_ORDER_TOPIC="order_topic"
+KAFKA_GROUP="my_group"
+KAFKA_INVENTORY_TOPIC="inventory_topic"
 
-Example values:
-KAFKA_BROKER=localhost:9092
-MONGO_URI=mongodb://admin:secret123@mongo-service:27017/mydb
+Order Service (order/.env)
+
+COUCHBASE_URL="couchbase://couchbase-order"
+COUCHBASE_USERNAME="admin"
+COUCHBASE_PASSWORD="123456"
+KAFKA_BROKER_ADDRESS="kafka:9092"
+KAFKA_TOPIC="order_topic"
+
+Payment Service (payment/.env)
+
+MONGO_CONN_URL="mongodb://admin:secret123@mongo-payment:27018/mydb?authSource=admin"
+KAFKA_BROKER_ADDRESS="kafka:9092"
+KAFKA_INVENTORY_TOPIC="inventory_topic"
+KAFKA_GROUP="my_group"
+
+Note: Make sure the .env files are in the root of their respective service directories and are not ignored by .dockerignore.
+All services are connected via a Docker network, so they can reach each other using service names defined in Docker Compose.
 
 4. Run the Services
 
-Each microservice (order, inventory, payment) has its own docker-compose.yml.
-Start them one by one in the following order:
+Each microservice has its own docker-compose.yml. Start them one by one in the following order:
 
 Start Order Service
 cd order
@@ -65,4 +82,14 @@ Check all running containers:
 
 docker ps
 
-You should see Kafka broker(s), order service, inventory service, payment service, and MongoDB (if included).
+You should see:
+
+Kafka broker(s)
+
+Order service
+
+Inventory service
+
+Payment service
+
+MongoDB / Couchbase (if included)
