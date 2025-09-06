@@ -10,9 +10,29 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: secret123
       MONGO_INITDB_DATABASE: mydb
     ports:
-      - "27018:27017"
+      - "27018:27017"  
     volumes:
       - mongo-data-payment:/data/db
+    networks:
+      - app-network     
+
+  go-payment-app:
+    build:
+      context: .        
+      dockerfile: Dockerfile
+    container_name: go-payment-app
+    ports:
+      - "3002:3002"  
+    env_file:
+      - .env
+    depends_on:
+      - mongo-payment 
+    networks:
+      - app-network    
 
 volumes:
   mongo-data-payment:
+
+networks:
+  app-network:
+    driver: bridge

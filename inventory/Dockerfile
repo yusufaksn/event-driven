@@ -34,7 +34,7 @@ COPY .env .env
 # Copy the config file
 
 # Expose the port your application runs on (adjust as needed)
-EXPOSE 3000
+EXPOSE 3001
 
 # Run the binary
 CMD ["./main"]

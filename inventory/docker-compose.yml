@@ -1,9 +1,9 @@
 version: '3.9'
 
 services:
-  mongo:
+  mongo-inventory:
     image: mongo:6.0
-    container_name: mongo-db
+    container_name: mongo-inventory
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
@@ -13,6 +13,26 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    networks:
+      - app-network 
+
+  go-inventory-app:
+    build:
+      context: .  
+      dockerfile: Dockerfile
+    container_name: go-inventory-app
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    depends_on:
+      - mongo-inventory
+    networks:
+      - app-network  
 
 volumes:
   mongo-data:
+
+networks:
+  app-network:
+    driver: bridge

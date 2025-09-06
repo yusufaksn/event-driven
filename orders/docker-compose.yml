@@ -33,6 +33,21 @@ services:
       - COLLECTOR_ZIPKIN_HOST_PORT=:9411
       - COLLECTOR_OTLP_ENABLED=true
 
+  go-order-app:
+    build:
+      context: .  
+      dockerfile: Dockerfile
+    container_name: go-order-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - couchbase-order
+      - jaeger
+    networks:
+      - app-network
+
 volumes:
   couchbase_order_data:
 
